@@ -10,7 +10,7 @@ class Foo
 {
     function bar()
     {
-        throw new Exception("Exception JAN IS AWESOME!");
+        throw new Exception("This is pretty neat!");
     }
 }
 

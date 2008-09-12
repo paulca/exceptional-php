@@ -60,6 +60,7 @@ class ExceptionalClient
             $request .= "Accept: */*\r\n";
             $request .= "User-Agent: exception-php-client 0.1\r\n";
             $request .= "Content-Type: text/xml\r\n";
+            $request .= "Connection: close\r\n";
             $request .= "Content-Length: ".strlen($post_data)."\r\n\r\n";
             $request .= "$post_data\r\n";
         } else {
