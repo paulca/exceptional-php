@@ -1,4 +1,6 @@
+Testing stuff
 <?php
+flush();
 // example usage of ExceptionalClient
 include "ExceptionalClient.php";
 
@@ -8,9 +10,12 @@ class Foo
 {
     function bar()
     {
-        throw new Exception("Exception text");
+        throw new Exception("Exception JAN IS AWESOME!");
     }
 }
 
 $f = new Foo;
 $f->bar();
+?>
+
+Done

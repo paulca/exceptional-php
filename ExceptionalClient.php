@@ -57,6 +57,9 @@ class ExceptionalClient
         $request = "POST $url HTTP/1.1\r\nHost: $this->host\r\n";
 
         if($post_data) {
+            $request .= "Accept: */*\r\n";
+            $request .= "User-Agent: exception-php-client 0.1\r\n";
+            $request .= "Content-Type: text/xml\r\n";
             $request .= "Content-Length: ".strlen($post_data)."\r\n\r\n";
             $request .= "$post_data\r\n";
         } else {
@@ -64,8 +67,8 @@ class ExceptionalClient
         }
 
         var_dump($request);
+flush();
         fwrite($s, $request);
-
         $response = "";
         while(!feof($s)) {
             $response .= fgets($s);
@@ -90,7 +93,7 @@ class ExceptionData
     
     function toXML()
     {
-        $now = time();
+        $now = date("D M j H:i:s O Y");
         $env = $this->envToXML();
         $session = $this->sessionToXML();
         $request_parameters = $this->requestToXML();
@@ -99,29 +102,31 @@ class ExceptionData
         $class = $trace[0]["class"];
         $function = $trace[0]["function"];
         $message = $this->exception->getMessage();
-        
+        $backtrace = $this->exception->getTraceAsString();
+		$error_class = get_class($this->exception);
 
-        return <<< EOD
+        return 
+"<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <error>
+  <agent_id>cc25f30e09d5d2e14cbdc7b0e1da30ba0896a58c</agent_id>
   <controller_name>$class</controller_name>
+  <error_class>$error_class</error_class>
   <action_name>$function</action_name>
-  <user_ip>$this->user_ip</user_ip>
-  <host_ip>$this->host_ip</host_ip>
   <environment>
 $env
   </environment>
   <session>
-$session
+
   </session>
-  <request_method>$this->request_method</request_method>
-  <request_uri>$this->request_uri</request_uri>
-  <request_parameters>
-$request_parameters
-  </request_parameters>
+  <rails_root>/</rails_root>
+  <url>$this->request_uri</url>
+  <parameters>
+
+  </parameters>
   <occurred_at>$now</occurred_at>
-  <summary>$message</summary>
-</error>
-EOD;
+  <message>$message</message>
+  <backtrace>$backtrace</backtrace>
+</error>";
     }
     
     
@@ -142,11 +147,13 @@ EOD;
 
     function _arrayToXML($array)
     {
-        if(!is_array($array)) {
-            return "";
+        if(!is_array($array) || empty($array)) {
+            return "   <no>values</no>";
         }
+
         $return_value = array();
         foreach($array AS $key => $value) {
+			$key = strToLower($key);
             $return_value[] = "    <$key>$value</$key>";
         }
         
@@ -154,60 +161,24 @@ EOD;
     }
 }
 /*
-sending exceptions:Array
-(
-    [0] => ExceptionData Object
-        (
-            [exception] => Exception Object
-                (
-                    [message:protected] => foo
-                    [string:private] => 
-                    [code:protected] => 0
-                    [file:protected] => /Users/jan/Desktop/ex_test.php
-                    [line:protected] => 11
-                    [trace:private] => Array
-                        (
-                            [0] => Array
-                                (
-                                    [file] => /Users/jan/Desktop/ex_test.php
-                                    [line] => 16
-                                    [function] => bar
-                                    [class] => Foo
-                                    [type] => ->
-                                    [args] => Array
-                                        (
-                                        )
-
-                                )
-
-                        )
-
-                )
-
-        )
-
-)
-
 POST to http://getexceptional.com/errors/?api_key=1234yuio123yiuo&protocol_version=2
 
-# Protocol VERSION 2
-# <error>
-#   <controller_name>..</controller_name>
-#   <action_name>...</action_name>
-#   <user_ip>...</user_ip>
-#   <host_ip>...</host_ip>
-#   <environment>
-#     <key>value</key>
-#   </environment>
-#   <session>
-#     <key>value</key>
-#   </session>
-#   <request_method>GET</request_method>
-#   <request_uri>http://...</request_uri>
-#   <request_parameters>
-#     <key>value</key>
-#   </request_parameters>
-#   <occurred_at>...</occurred_at>
-#   <summary>...</summary>
-# </error>
+<?xml version="1.0" encoding="UTF-8"?><error><agent_id>cc25f30e09d5d2e14cbdc7b0e1da30ba0896a58c</agent_id>
+<controller_name>Foo</controller_name>
+<action_name>bar</action_name>
+<error_class>DodgyException</error_class>
+<message>this is awesome</message>
+<backtrace>the craziness</backtrace>
+<occurred_at>Thu Sep 11 16:05:53 -0400 2008</occurred_at>
+<rails_root>/var/www/woo/woo/woo</rails_root>
+<url>http://www.tryme.com</url>
+<environment>
+ <server_name>lovely</server_name>
+ <foo>nice</foo>
+</environment>
+<session>
+ <foo>bar</foo>
+</session>
+<parameters>POST DATA</parameters>
+</error>"
 */
